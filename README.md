@@ -39,13 +39,13 @@ college-employment-analysis/
    - 数据下钻与交互分析
 
 ![image.png](employment-front/src/assets/image.png)
-![1 (1).png](employment-front/src/assets/1 (1).png)
-![1 (2).png](employment-front/src/assets/1 (2).png)
-![1 (6).png](employment-front/src/assets/1 (6).png)
-![1 (5).png](employment-front/src/assets/1 (5).png)
-![1 (4).png](employment-front/src/assets/1 (4).png)
-![1 (3).png](employment-front/src/assets/1 (3).png)
-![1 (7).png](employment-front/src/assets/1 (7).png)
+![1 (1).png](employment-front/src/assets/1%20%281%29.png)
+![1 (2).png](employment-front/src/assets/1%20%282%29.png)
+![1 (6).png](employment-front/src/assets/1%20%286%29.png)
+![1 (5).png](employment-front/src/assets/1%20%285%29.png)
+![1 (4).png](employment-front/src/assets/1%20%284%29.png)
+![1 (3).png](employment-front/src/assets/1%20%283%29.png)
+![1 (7).png](employment-front/src/assets/1%20%287%29.png)
 
 ## 快速开始
 

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地区分析 - 就业数据可视化平台</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.31/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.3/map/js/china.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@0.21.1/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/element-plus"></script>
+</head>
+<body>
+<div id="app">
+    <!-- 动态背景 -->
+    <div class="grid-bg"></div>
+    <div class="data-flow" id="data-flow"></div>
+
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <div class="logo-text">地区就业分析</div>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item" @click="navigate('overview')">就业概况</div>
+            <div class="nav-item" @click="navigate('major-analysis')">专业分析</div>
+            <div class="nav-item active">地区分析</div>
+            <div class="nav-item" @click="navigate('salary-analysis')">薪资分析</div>
+            <div class="nav-item" @click="navigate('trend-analysis')">趋势分析</div>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <!-- 全国就业热力图 -->
+        <div class="card col-12">
+            <div class="card-header">
+                <div class="card-title">全国就业分布热力图</div>
+                <div class="card-tabs">
+                    <div class="tab-item" :class="{'active': mapType === 'employment'}" @click="mapType = 'employment'">就业人数</div>
+                    <div class="tab-item" :class="{'active': mapType === 'salary'}" @click="mapType = 'salary'">平均薪资</div>
+                </div>
+            </div>
+            <div class="chart-container" id="map-chart"></div>
+        </div>
+
+        <!-- 地区薪资与就业人数对比 -->
+        <div class="card col-8">
+            <div class="card-header">
+                <div class="card-title">地区平均薪资 vs 就业人数</div>
+                <div class="card-tabs">
+                    <div class="tab-item" :class="{'active': regionType === 'province'}" @click="regionType = 'province'">省份</div>
+                    <div class="tab-item" :class="{'active': regionType === 'city'}" @click="regionType = 'city'">重点城市</div>
+                </div>
+            </div>
+            <div class="chart-container" id="comparison-chart"></div>
+        </div>
+
+        <!-- 地区数据摘要 -->
+        <div class="card col-4">
+            <div class="card-header">
+                <div class="card-title">地区数据摘要</div>
+            </div>
+            <div class="region-stats">
+                <div class="region-stat">
+                    <div class="stat-label">最高就业地区</div>
+                    <div class="stat-value">{{ topEmployment.region }}</div>
+                    <div class="stat-detail">
+                        <span class="stat-number">{{ topEmployment.employment }}人</span>
+                        <span class="stat-change">↑ {{ topEmployment.growth }}%</span>
+                    </div>
+                </div>
+                <div class="region-stat">
+                    <div class="stat-label">最高薪资地区</div>
+                    <div class="stat-value">{{ topSalary.region }}</div>
+                    <div class="stat-detail">
+                        <span class="stat-number">¥{{ topSalary.salary.toLocaleString() }}</span>
+                        <span class="stat-change">↑ {{ topSalary.growth }}%</span>
+                    </div>
+                </div>
+                <div class="region-stat">
+                    <div class="stat-label">就业增长最快</div>
+                    <div class="stat-value">{{ topGrowth.region }}</div>
+                    <div class="stat-detail">
+                        <span class="stat-number">↑ {{ topGrowth.rate }}%</span>
+                        <span class="stat-change">新增 {{ topGrowth.increase }}人</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 地区详细数据表格 -->
+        <div class="card col-12">
+            <div class="card-header">
+                <div class="card-title">地区详细就业数据</div>
+                <div class="table-controls">
+                    <el-input
+                            v-model="search"
+                            size="small"
+                            placeholder="搜索地区名称"
+                            class="search-input"
+                    />
+                    <el-select v-model="filterRegion" placeholder="筛选区域" size="small" class="filter-select">
+                        <el-option label="全部地区" value="all"></el-option>
+                        <el-option label="东部地区" value="east"></el-option>
+                        <el-option label="中部地区" value="central"></el-option>
+                        <el-option label="西部地区" value="west"></el-option>
+                        <el-option label="东北地区" value="northeast"></el-option>
+                    </el-select>
+                </div>
+            </div>
+            <el-table
+                    :data="filteredTableData"
+                    style="width: 100%"
+                    height="400"
+                    stripe
+                    highlight-current-row
+                    @sort-change="handleSortChange"
+            >
+                <el-table-column
+                        prop="region"
+                        label="地区"
+                        sortable="custom"
+                        width="180"
+                />
+                <el-table-column
+                        prop="employment"
+                        label="就业人数"
+                        sortable="custom"
+                        width="120"
+                >
+                    <template #default="scope">
+                        <div class="trend-cell">
+                            <span>{{ scope.row.employment.toLocaleString() }}</span>
+                            <span class="trend up" v-if="scope.row.growth > 0">
+                                    ↑ {{ scope.row.growth }}%
+                                </span>
+                            <span class="trend down" v-else-if="scope.row.growth < 0">
+                                    ↓ {{ Math.abs(scope.row.growth) }}%
+                                </span>
+                        </div>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        prop="avgSalary"
+                        label="平均薪资 (¥)"
+                        sortable="custom"
+                        width="150"
+                >
+                    <template #default="scope">
+                        <span class="salary-value">¥{{ scope.row.avgSalary.toLocaleString() }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        prop="salaryGrowth"
+                        label="薪资涨幅"
+                        sortable="custom"
+                        width="120"
+                >
+                    <template #default="scope">
+                            <span class="trend up" v-if="scope.row.salaryGrowth > 0">
+                                ↑ {{ scope.row.salaryGrowth }}%
+                            </span>
+                        <span class="trend down" v-else-if="scope.row.salaryGrowth < 0">
+                                ↓ {{ Math.abs(scope.row.salaryGrowth) }}%
+                            </span>
+                        <span v-else>—</span>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        prop="industryDistribution"
+                        label="主要行业分布"
+                >
+                    <template #default="scope">
+                        <div class="industry-tags">
+                            <el-tag
+                                    v-for="(industry, idx) in scope.row.topIndustries"
+                                    :key="idx"
+                                    size="small"
+                                    :type="getIndustryTagType(industry)"
+                            >
+                                {{ industry.name }} ({{ industry.percent }}%)
+                            </el-tag>
+                        </div>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        prop="graduateRatio"
+                        label="本地毕业生占比"
+                        width="150"
+                >
+                    <template #default="scope">
+                        <el-progress
+                                :percentage="scope.row.graduateRatio"
+                                :color="getProgressColor(scope.row.graduateRatio)"
+                                :show-text="false"
+                        />
+                        <span>{{ scope.row.graduateRatio }}%</span>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <div class="pagination-container">
+                <el-pagination
+                        v-model:currentPage="currentPage"
+                        :page-size="pageSize"
+                        layout="prev, pager, next, jumper"
+                        :total="filteredTableData.length"
+                        background
+                />
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

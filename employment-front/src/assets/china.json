@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "北京市"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[116.4, 39.9], [116.5, 39.9], [116.5, 40.0], [116.4, 40.0], [116.4, 39.9]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "上海市"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[121.4, 31.2], [121.5, 31.2], [121.5, 31.3], [121.4, 31.3], [121.4, 31.2]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "广东省"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[113.0, 22.0], [115.0, 22.0], [115.0, 25.0], [113.0, 25.0], [113.0, 22.0]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "江苏省"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[118.0, 31.0], [120.0, 31.0], [120.0, 35.0], [118.0, 35.0], [118.0, 31.0]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "浙江省"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[118.0, 27.0], [122.0, 27.0], [122.0, 31.0], [118.0, 31.0], [118.0, 27.0]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "四川省"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[97.0, 26.0], [108.0, 26.0], [108.0, 34.0], [97.0, 34.0], [97.0, 26.0]]]
+      }
+    }
+  ]
+}

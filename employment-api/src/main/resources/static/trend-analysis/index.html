@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>趋势分析 - 就业数据可视化平台</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.31/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@0.21.1/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/element-plus"></script>
+</head>
+<body>
+<div id="app">
+    <!-- 动态背景 -->
+    <div class="grid-bg"></div>
+    <div class="data-flow" id="data-flow"></div>
+    <div class="timeline-indicator"></div>
+
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">
+                <div class="pulse"></div>
+            </div>
+            <div class="logo-text">趋势分析中心</div>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item" @click="navigate('overview')">就业概况</div>
+            <div class="nav-item" @click="navigate('major-analysis')">专业分析</div>
+            <div class="nav-item" @click="navigate('region-analysis')">地区分析</div>
+            <div class="nav-item" @click="navigate('salary-analysis')">薪资分析</div>
+            <div class="nav-item active">趋势分析</div>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <!-- 时间范围选择 -->
+        <div class="card col-12">
+            <div class="card-header">
+                <div class="card-title">时间范围选择</div>
+            </div>
+            <div class="time-controls">
+                <div class="time-tabs">
+                    <div class="tab-item" :class="{'active': timeRange === '5y'}" @click="timeRange = '5y'">近5年</div>
+                    <div class="tab-item" :class="{'active': timeRange === '3y'}" @click="timeRange = '3y'">近3年</div>
+                    <div class="tab-item" :class="{'active': timeRange === 'year'}" @click="timeRange = 'year'">年度</div>
+                    <div class="tab-item" :class="{'active': timeRange === 'quarter'}" @click="timeRange = 'quarter'">季度</div>
+                </div>
+                <div class="date-range">
+                    <el-date-picker
+                            v-model="dateRange"
+                            type="daterange"
+                            range-separator="至"
+                            start-placeholder="开始日期"
+                            end-placeholder="结束日期"
+                            size="small"
+                            :clearable="false"
+                    />
+                </div>
+            </div>
+        </div>
+
+        <!-- 就业率趋势 -->
+        <div class="card col-6">
+            <div class="card-header">
+                <div class="card-title">就业率趋势变化</div>
+                <div class="card-tabs">
+                    <div class="tab-item" :class="{'active': employmentType === 'all'}" @click="employmentType = 'all'">总体</div>
+                    <div class="tab-item" :class="{'active': employmentType === 'grad'}" @click="employmentType = 'grad'">应届生</div>
+                </div>
+            </div>
+            <div class="chart-container" id="employment-trend-chart"></div>
+            <div class="trend-summary">
+                <div class="trend-item">
+                    <span class="label">当前就业率:</span>
+                    <span class="value">{{ currentEmploymentRate }}%</span>
+                </div>
+                <div class="trend-item">
+                    <span class="label">较上年:</span>
+                    <span class="value" :class="employmentGrowth >= 0 ? 'up' : 'down'">
+                            {{ employmentGrowth >= 0 ? '+' : '' }}{{ employmentGrowth }}%
+                        </span>
+                </div>
+                <div class="trend-item">
+                    <span class="label">五年变化:</span>
+                    <span class="value" :class="fiveYearEmploymentChange >= 0 ? 'up' : 'down'">
+                            {{ fiveYearEmploymentChange >= 0 ? '+' : '' }}{{ fiveYearEmploymentChange }}%
+                        </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 薪资趋势 -->
+        <div class="card col-6">
+            <div class="card-header">
+                <div class="card-title">薪资趋势变化</div>
+                <div class="card-tabs">
+                    <div class="tab-item" :class="{'active': salaryTrendType === 'avg'}" @click="salaryTrendType = 'avg'">平均薪资</div>
+                    <div class="tab-item" :class="{'active': salaryTrendType === 'median'}" @click="salaryTrendType = 'median'">中位数</div>
+                </div>
+            </div>
+            <div class="chart-container" id="salary-trend-chart"></div>
+            <div class="trend-summary">
+                <div class="trend-item">
+                    <span class="label">当前薪资:</span>
+                    <span class="value">¥{{ currentSalary.toLocaleString() }}</span>
+                </div>
+                <div class="trend-item">
+                    <span class="label">较上年:</span>
+                    <span class="value" :class="salaryGrowth >= 0 ? 'up' : 'down'">
+                            {{ salaryGrowth >= 0 ? '+' : '' }}{{ salaryGrowth }}%
+                        </span>
+                </div>
+                <div class="trend-item">
+                    <span class="label">五年增幅:</span>
+                    <span class="value up">+{{ fiveYearSalaryGrowth }}%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 行业就业趋势 -->
+        <div class="card col-12">
+            <div class="card-header">
+                <div class="card-title">行业就业人数变化趋势</div>
+                <div class="industry-selector">
+                    <el-select
+                            v-model="selectedIndustries"
+                            multiple
+                            placeholder="选择行业"
+                            size="small"
+                            collapse-tags
+                            collapse-tags-tooltip
+                    >
+                        <el-option
+                                v-for="industry in allIndustries"
+                                :key="industry"
+                                :label="industry"
+                                :value="industry"
+                        />
+                    </el-select>
+                    <div class="legend-toggle" @click="toggleLegend">
+                        {{ showLegend ? '隐藏图例' : '显示图例' }}
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container" id="industry-trend-chart"></div>
+        </div>
+
+        <!-- 趋势预测 -->
+        <div class="card col-12">
+            <div class="card-header">
+                <div class="card-title">未来趋势预测</div>
+                <div class="card-tabs">
+                    <div class="tab-item" :class="{'active': forecastType === 'employment'}" @click="forecastType = 'employment'">就业率</div>
+                    <div class="tab-item" :class="{'active': forecastType === 'salary'}" @click="forecastType = 'salary'">平均薪资</div>
+                </div>
+            </div>
+            <div class="forecast-container">
+                <div class="chart-container" id="forecast-chart"></div>
+                <div class="forecast-summary">
+                    <h3>预测分析</h3>
+                    <p>{{ forecastSummary }}</p>
+                    <div class="confidence">
+                        <span>预测置信度:</span>
+                        <el-progress :percentage="forecastConfidence" :color="getConfidenceColor(forecastConfidence)" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部装饰 -->
+    <div class="time-wave"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

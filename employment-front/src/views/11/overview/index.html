@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>就业概况 - 数据可视化平台</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.31/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@0.21.1/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.3/map/js/china.js"></script>
+</head>
+<body>
+<div id="app">
+    <!-- 动态背景 -->
+    <div class="grid-bg"></div>
+    <div class="data-flow" id="data-flow"></div>
+
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <div class="logo-text">就业数据可视化平台</div>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item active">就业概况</div>
+            <div class="nav-item" @click="navigate('major-analysis')">专业分析</div>
+            <div class="nav-item" @click="navigate('region-analysis')">地区分析</div>
+            <div class="nav-item" @click="navigate('salary-analysis')">薪资分析</div>
+            <div class="nav-item" @click="navigate('trend-analysis')">趋势分析</div>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <!-- 数据卡片 -->
+        <div class="card col-3">
+            <div class="stats-card">
+                <div class="stat-label">总毕业人数</div>
+                <div class="stat-value">{{ stats.totalGraduates }}</div>
+            </div>
+        </div>
+
+        <div class="card col-3">
+            <div class="stats-card">
+                <div class="stat-label">就业人数</div>
+                <div class="stat-value">{{ stats.employed }}</div>
+            </div>
+        </div>
+
+        <div class="card col-3">
+            <div class="stats-card">
+                <div class="stat-label">就业率</div>
+                <div class="stat-value">{{ stats.employmentRate }}%</div>
+            </div>
+        </div>
+
+        <div class="card col-3">
+            <div class="stats-card">
+                <div class="stat-label">平均薪资</div>
+                <div class="stat-value">¥{{ stats.avgSalary }}</div>
+            </div>
+        </div>
+
+        <!-- 各学历就业率对比 -->
+        <div class="card col-6">
+            <div class="card-header">
+                <div class="card-title">各学历就业率对比</div>
+            </div>
+            <div class="chart-container" id="education-chart"></div>
+        </div>
+
+        <!-- 行业就业占比 -->
+        <div class="card col-6">
+            <div class="card-header">
+                <div class="card-title">行业就业占比</div>
+            </div>
+            <div class="chart-container" id="industry-chart"></div>
+        </div>
+
+        <!-- 全国就业分布 -->
+        <div class="card col-12">
+            <div class="card-header">
+                <div class="card-title">全国就业分布热力图</div>
+            </div>
+            <div class="chart-container" id="map-chart"></div>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

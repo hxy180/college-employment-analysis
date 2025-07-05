@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>薪资分析 - 就业数据可视化平台</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.31/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@0.21.1/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/element-plus"></script>
+</head>
+<body>
+<div id="app">
+    <!-- 动态背景 -->
+    <div class="grid-bg"></div>
+    <div class="data-flow" id="data-flow"></div>
+    <div class="cyber-grid"></div>
+
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <div class="logo-text">薪资分析中心</div>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item" @click="navigate('overview')">就业概况</div>
+            <div class="nav-item" @click="navigate('major-analysis')">专业分析</div>
+            <div class="nav-item" @click="navigate('region-analysis')">地区分析</div>
+            <div class="nav-item active">薪资分析</div>
+            <div class="nav-item" @click="navigate('trend-analysis')">趋势分析</div>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <!-- 薪资区间分布 -->
+        <div class="card col-6">
+            <div class="card-header">
+                <div class="card-title">薪资区间分布</div>
+                <div class="card-tabs">
+                    <div class="tab-item" :class="{'active': salaryRangeType === 'all'}" @click="salaryRangeType = 'all'">全体</div>
+                    <div class="tab-item" :class="{'active': salaryRangeType === 'grad'}" @click="salaryRangeType = 'grad'">应届生</div>
+                </div>
+            </div>
+            <div class="chart-container" id="salary-range-chart"></div>
+        </div>
+
+        <!-- 学历维度薪资对比 -->
+        <div class="card col-6">
+            <div class="card-header">
+                <div class="card-title">学历维度薪资对比</div>
+                <div class="card-tabs">
+                    <div class="tab-item" :class="{'active': educationSalaryType === 'avg'}" @click="educationSalaryType = 'avg'">平均薪资</div>
+                    <div class="tab-item" :class="{'active': educationSalaryType === 'median'}" @click="educationSalaryType = 'median'">中位数</div>
+                </div>
+            </div>
+            <div class="chart-container" id="education-salary-chart"></div>
+        </div>
+
+        <!-- 专业维度薪资对比 -->
+        <div class="card col-8">
+            <div class="card-header">
+                <div class="card-title">专业维度薪资对比</div>
+                <div class="card-tabs">
+                    <div class="tab-item" :class="{'active': majorSalaryType === 'top'}" @click="majorSalaryType = 'top'">TOP10</div>
+                    <div class="tab-item" :class="{'active': majorSalaryType === 'bottom'}" @click="majorSalaryType = 'bottom'">BOTTOM10</div>
+                    <div class="tab-item" :class="{'active': majorSalaryType === 'all'}" @click="majorSalaryType = 'all'">全部</div>
+                </div>
+            </div>
+            <div class="chart-container" id="major-salary-chart"></div>
+        </div>
+
+        <!-- 薪资分布摘要 -->
+        <div class="card col-4">
+            <div class="card-header">
+                <div class="card-title">薪资分布摘要</div>
+            </div>
+            <div class="salary-stats">
+                <div class="salary-stat">
+                    <div class="stat-label">平均薪资</div>
+                    <div class="stat-value">¥{{ salarySummary.avgSalary.toLocaleString() }}</div>
+                    <div class="stat-change">
+                        <span class="trend up">↑ {{ salarySummary.salaryGrowth }}%</span>
+                        较上年
+                    </div>
+                </div>
+                <div class="salary-stat">
+                    <div class="stat-label">薪资中位数</div>
+                    <div class="stat-value">¥{{ salarySummary.medianSalary.toLocaleString() }}</div>
+                </div>
+                <div class="salary-stat">
+                    <div class="stat-label">最高薪资行业</div>
+                    <div class="stat-value">{{ salarySummary.topIndustry }}</div>
+                    <div class="stat-detail">¥{{ salarySummary.topIndustrySalary.toLocaleString() }}</div>
+                </div>
+                <div class="salary-stat">
+                    <div class="stat-label">高薪人群占比</div>
+                    <div class="stat-value">{{ salarySummary.highSalaryPercent }}%</div>
+                    <div class="stat-detail">(月薪>15K)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 行业薪资对比 -->
+        <div class="card col-12">
+            <div class="card-header">
+                <div class="card-title">行业薪资对比</div>
+                <div class="card-tabs">
+                    <div class="tab-item" :class="{'active': industrySalaryType === 'avg'}" @click="industrySalaryType = 'avg'">平均薪资</div>
+                    <div class="tab-item" :class="{'active': industrySalaryType === 'median'}" @click="industrySalaryType = 'median'">中位数</div>
+                    <div class="tab-item" :class="{'active': industrySalaryType === 'range'}" @click="industrySalaryType = 'range'">薪资范围</div>
+                </div>
+            </div>
+            <div class="chart-container" id="industry-salary-chart"></div>
+        </div>
+    </div>
+
+    <!-- 底部科技感装饰 -->
+    <div class="cyber-footer">
+        <div class="cyber-line"></div>
+        <div class="footer-text">数据来源：就业数据分析平台 | 实时动态更新</div>
+        <div class="cyber-line"></div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

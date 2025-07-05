@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专业分析 - 就业数据可视化平台</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.31/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.3/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts-sankey@1.0.1/dist/echarts-sankey.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@0.21.1/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/element-plus"></script>
+</head>
+<body>
+<div id="app">
+    <!-- 动态背景 -->
+    <div class="grid-bg"></div>
+    <div class="data-flow" id="data-flow"></div>
+
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <div class="logo-text">专业数据分析</div>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item" @click="navigate('overview')">就业概况</div>
+            <div class="nav-item active">专业分析</div>
+            <div class="nav-item" @click="navigate('region-analysis')">地区分析</div>
+            <div class="nav-item" @click="navigate('salary-analysis')">薪资分析</div>
+            <div class="nav-item" @click="navigate('trend-analysis')">趋势分析</div>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <!-- 专业就业率TOP10 -->
+        <div class="card col-6">
+            <div class="card-header">
+                <div class="card-title">专业就业率TOP10</div>
+                <div class="card-tabs">
+                    <div class="tab-item" :class="{'active': employmentTab === 'top'}" @click="employmentTab = 'top'">TOP10</div>
+                    <div class="tab-item" :class="{'active': employmentTab === 'bottom'}" @click="employmentTab = 'bottom'">BOTTOM10</div>
+                </div>
+            </div>
+            <div class="chart-container" id="employment-chart"></div>
+        </div>
+
+        <!-- 专业平均薪资 -->
+        <div class="card col-6">
+            <div class="card-header">
+                <div class="card-title">专业平均薪资</div>
+            </div>
+            <div class="chart-container" id="salary-chart"></div>
+        </div>
+
+        <!-- 专业与行业流向桑基图 -->
+        <div class="card col-12">
+            <div class="card-header">
+                <div class="card-title">专业与行业就业流向</div>
+            </div>
+            <div class="chart-container" id="sankey-chart"></div>
+        </div>
+
+        <!-- 专业详情表格 -->
+        <div class="card col-12">
+            <div class="card-header">
+                <div class="card-title">专业详情数据</div>
+                <div class="table-controls">
+                    <el-input
+                            v-model="search"
+                            size="small"
+                            placeholder="搜索专业名称"
+                            class="search-input"
+                    />
+                    <el-select v-model="filterField" placeholder="筛选字段" size="small" class="filter-select">
+                        <el-option label="所有字段" value="all"></el-option>
+                        <el-option label="专业名称" value="major"></el-option>
+                        <el-option label="就业率" value="employmentRate"></el-option>
+                        <el-option label="平均薪资" value="avgSalary"></el-option>
+                    </el-select>
+                </div>
+            </div>
+            <el-table
+                    :data="filteredTableData"
+                    style="width: 100%"
+                    height="400"
+                    stripe
+                    highlight-current-row
+                    @sort-change="handleSortChange"
+            >
+                <el-table-column
+                        prop="major"
+                        label="专业名称"
+                        sortable="custom"
+                        width="200"
+                />
+                <el-table-column
+                        prop="employmentRate"
+                        label="就业率 (%)"
+                        sortable="custom"
+                        width="120"
+                >
+                    <template #default="scope">
+                        <div class="progress-cell">
+                            <el-progress
+                                    :percentage="scope.row.employmentRate"
+                                    :color="getProgressColor(scope.row.employmentRate)"
+                                    :show-text="false"
+                            />
+                            <span>{{ scope.row.employmentRate }}%</span>
+                        </div>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        prop="avgSalary"
+                        label="平均薪资 (¥)"
+                        sortable="custom"
+                        width="150"
+                >
+                    <template #default="scope">
+                        <span class="salary-value">¥{{ scope.row.avgSalary.toLocaleString() }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        prop="employmentCount"
+                        label="就业人数"
+                        sortable="custom"
+                        width="120"
+                />
+                <el-table-column
+                        prop="topIndustry"
+                        label="主要就业行业"
+                />
+                <el-table-column
+                        prop="industryPercent"
+                        label="行业占比 (%)"
+                        width="120"
+                />
+            </el-table>
+            <div class="pagination-container">
+                <el-pagination
+                        v-model:currentPage="currentPage"
+                        :page-size="pageSize"
+                        layout="prev, pager, next, jumper"
+                        :total="filteredTableData.length"
+                        background
+                />
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
